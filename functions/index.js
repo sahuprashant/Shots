@@ -24,6 +24,7 @@ exports.sendanEmail = functions.https.onCall((data,context) => {
 	return sendLoginEmail(email, displayName,picture)
 	.then(() => {
 		console.log('New message written!');
+		return null;
 	})
 	.catch((error) => {
 		throw new functions.https.HttpsError('unknown pras',error.message,error);
@@ -33,7 +34,7 @@ exports.sendanEmail = functions.https.onCall((data,context) => {
 function sendLoginEmail(email, displayName,picture) {
 	const mailOptions = {
 	  from: `${APP_NAME} <noreply@firebase.com>`,
-	  to: 'psahu274@gmail.com',
+	  to: 'kg@wa-tt.com',
 	};
   
 	mailOptions.subject = `Info from ${APP_NAME}!`;
