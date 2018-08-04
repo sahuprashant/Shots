@@ -16,6 +16,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,12 +30,20 @@ import com.facebook.login.LoginManager;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.FirebaseFunctionsException;
+import com.google.firebase.functions.HttpsCallableResult;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.mail.Message;
@@ -51,10 +61,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private DatabaseReference mdatabase, mref;
     TextView username, useremail, userlocation;
     ImageView userimage;
+    Button button;
     private FusedLocationProviderClient mFusedLocationClient;
     private GoogleApiClient googleApiClient;
     public String TAG = "MainActivity";
-
+    private FirebaseFunctions mfirebaseFunctions;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,7 +77,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         useremail = findViewById(R.id.useremail);
         userlocation = findViewById(R.id.userlocation);
         userimage = findViewById(R.id.userimage);
+        button = findViewById(R.id.button2);
         mdatabase = FirebaseDatabase.getInstance().getReference();
+        mfirebaseFunctions = FirebaseFunctions.getInstance();
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendFirstMessage(muser.getUid());
+            }
+        });
         googleApiClient = new GoogleApiClient.Builder(this, this, this).addApi(LocationServices.API).build();
         if (muser != null) {
             Glide.with(this).load(muser.getPhotoUrl()).into(userimage);
@@ -89,15 +108,46 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                         public void onSuccess(Location location) {
                             // Got last known location. In some rare situations this can be null.
                             if (location != null) {
-                                Log.d("MainActivity", "Location found onCreate: " + location.getLongitude() + " " + location.getLatitude());
+                                Log.d("MainActivity", "Location found" + location.getLongitude() + " " + location.getLatitude());
                                 userlocation.setText(location.getLatitude()+","+location.getLongitude());
                             }
                         }
                     });
         }
 
+
         //new sendanemail(muser.getDisplayName(), muser.getPhotoUrl(), muser.getEmail()).execute();
 
+    }
+
+    private Task<Void> firstMessage(String uid){
+        return mfirebaseFunctions.getHttpsCallable("firstMessage")
+                .call(uid)
+                .continueWith(new Continuation<HttpsCallableResult, Void>() {
+                    @Override
+                    public Void then(@NonNull Task<HttpsCallableResult> task) throws Exception {
+                        return null;
+                    }
+                });
+    }
+    private void sendFirstMessage(String uid){
+        firstMessage(uid).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (!task.isSuccessful()){
+                    Exception e = task.getException();
+                    if (e instanceof FirebaseFunctionsException){
+                        FirebaseFunctionsException ffe = (FirebaseFunctionsException) e;
+                        FirebaseFunctionsException.Code code = ffe.getCode();
+                        Object details = ffe.getDetails();
+                    }
+                    Log.w("MainActivity","addMessage:onFailure",e);
+                    Toast.makeText(MainActivity.this,"An error occured",Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Toast.makeText(MainActivity.this,"Task Completed successfully! ",Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -196,9 +246,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         itemsignout.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem menuItem) {
+                mdatabase.child(muser.getUid()).child("userdetail").child("logged").setValue(false);
                 FirebaseAuth.getInstance().signOut();
                 LoginManager.getInstance().logOut();
                 startActivity(new Intent(MainActivity.this,LoginActivity.class));
+                finish();
                 return true;
             }
         });
