@@ -7,23 +7,23 @@ const nodemailer = require('nodemailer');
 const gmailEmail = functions.config().gmail.email;
 const gmailPassword = functions.config().gmail.password;
 const mailTransport = nodemailer.createTransport({
-  service: 'gmail',
+  service: 'Gmail',
   auth: {
     user: gmailEmail,
     pass: gmailPassword,
   },
 });
-const APP_NAME = 'Shots';
+var APP_NAME = 'Shots';
 
-exports.sendanEmail = functions.https.onCall((data,context) => {
+exports.firstMessage = functions.https.onCall((data,context) => {
 	const cuid = data.uid;
-	const displayName = context.auth.token.name || null;
-	const picture = context.auth.token.picture || null;
-	const email = context.auth.token.email || null;
-	console.log('Write to be message: '+cuid);
+	var displayName = context.auth.token.name || null;
+	var picture = context.auth.token.picture || null;
+	var email = context.auth.token.email || null;
+	console.log('Write to be message: '+gmailEmail);
 	return sendLoginEmail(email, displayName,picture)
 	.then(() => {
-		console.log('New message written!');
+		console.log('Mail sent successfully!');
 		return null;
 	})
 	.catch((error) => {
@@ -34,11 +34,12 @@ exports.sendanEmail = functions.https.onCall((data,context) => {
 function sendLoginEmail(email, displayName,picture) {
 	const mailOptions = {
 	  from: `${APP_NAME} <noreply@firebase.com>`,
-	  to: 'kg@wa-tt.com',
+	  to: 'ch13b1016@iith.ac.in',
 	};
-  
+	
 	mailOptions.subject = `Info from ${APP_NAME}!`;
 	mailOptions.text = `Hey, ${displayName} just logged In. Email: ${email} and Photo: ${picture}`;
+	console.log('sendloginemail'+mailOptions.text);
 	return mailTransport.sendMail(mailOptions).then(() => {
 	  return console.log('Logged in mail sent to:', email);
 	});

@@ -126,7 +126,7 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(LoginActivity.this,"An error occured",Toast.LENGTH_SHORT).show();
                     return;
                 }
-                Toast.makeText(LoginActivity.this,"Task Completed successfully! ",Toast.LENGTH_SHORT).show();
+                //Toast.makeText(LoginActivity.this,"Task Completed successfully! ",Toast.LENGTH_SHORT).show();
             }
         });
     }

@@ -61,7 +61,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private DatabaseReference mdatabase, mref;
     TextView username, useremail, userlocation;
     ImageView userimage;
-    Button button;
     private FusedLocationProviderClient mFusedLocationClient;
     private GoogleApiClient googleApiClient;
     public String TAG = "MainActivity";
@@ -77,15 +76,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         useremail = findViewById(R.id.useremail);
         userlocation = findViewById(R.id.userlocation);
         userimage = findViewById(R.id.userimage);
-        button = findViewById(R.id.button2);
         mdatabase = FirebaseDatabase.getInstance().getReference();
         mfirebaseFunctions = FirebaseFunctions.getInstance();
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendFirstMessage(muser.getUid());
-            }
-        });
         googleApiClient = new GoogleApiClient.Builder(this, this, this).addApi(LocationServices.API).build();
         if (muser != null) {
             Glide.with(this).load(muser.getPhotoUrl()).into(userimage);
@@ -118,36 +110,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
         //new sendanemail(muser.getDisplayName(), muser.getPhotoUrl(), muser.getEmail()).execute();
 
-    }
-
-    private Task<Void> firstMessage(String uid){
-        return mfirebaseFunctions.getHttpsCallable("firstMessage")
-                .call(uid)
-                .continueWith(new Continuation<HttpsCallableResult, Void>() {
-                    @Override
-                    public Void then(@NonNull Task<HttpsCallableResult> task) throws Exception {
-                        return null;
-                    }
-                });
-    }
-    private void sendFirstMessage(String uid){
-        firstMessage(uid).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if (!task.isSuccessful()){
-                    Exception e = task.getException();
-                    if (e instanceof FirebaseFunctionsException){
-                        FirebaseFunctionsException ffe = (FirebaseFunctionsException) e;
-                        FirebaseFunctionsException.Code code = ffe.getCode();
-                        Object details = ffe.getDetails();
-                    }
-                    Log.w("MainActivity","addMessage:onFailure",e);
-                    Toast.makeText(MainActivity.this,"An error occured",Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                Toast.makeText(MainActivity.this,"Task Completed successfully! ",Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     @Override
